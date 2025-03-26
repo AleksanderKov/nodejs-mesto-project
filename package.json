@@ -1,0 +1,31 @@
+{
+  "name": "nodejs-mesto-project",
+  "version": "1.0.0",
+  "description": "Mesto Node",
+  "main": "app.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "npx eslint src/**/*.ts",
+    "start": "ts-node src/app.ts",
+    "build": "tsc",
+    "dev": "ts-node src/app.ts --watch"
+  },
+  "author": "Aleksandr Kovalev",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/express": "^5.0.1",
+    "@types/node": "^22.13.12",
+    "@typescript-eslint/eslint-plugin": "^8.27.0",
+    "@typescript-eslint/parser": "^8.27.0",
+    "eslint": "^8.2.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.25.2",
+    "nodemon": "^3.1.9",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.2"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "mongoose": "^8.12.2"
+  }
+}
