@@ -1,12 +1,11 @@
-import { Request, Response, NextFunction, RequestHandler } from 'express';
-import Card from '../models/card';
+import { RequestHandler } from 'express';
 import { Error as MongooseError } from 'mongoose';
-import {
-  BAD_REQUEST,
-  FORBIDDEN,
-  NOT_FOUND,
-  CREATED
-} from '../constants';
+import Card from '../models/card';
+import { CREATED } from '../constants';
+
+import BadRequest from '../errors/bad-request';
+import Forbidden from '../errors/forbidden';
+import NotFound from '../errors/not-found';
 
 export const getCards: RequestHandler = async (req, res, next): Promise<void> => {
   try {
@@ -17,96 +16,77 @@ export const getCards: RequestHandler = async (req, res, next): Promise<void> =>
   }
 };
 
-export const createCard: RequestHandler = async (req, res, next): Promise<void> => {
-  try {
-    const { name, link } = req.body;
-    const ownerId = req.user?._id;
-    const card = new Card({ name, link, owner: ownerId });
-    const savedCard = await card.save();
-    res.status(CREATED).json(savedCard);
-  } catch (err) {
-    if (err instanceof MongooseError.ValidationError) {
-      res.status(BAD_REQUEST).json({ message: 'Переданы некорректные данные при создании карточки' });
-      return;
-    }
-    next(err);
-  }
+export const createCard: RequestHandler = (req, res, next) => {
+  const { name, link } = req.body;
+  const owner = req.user?._id;
+  Card.create({ name, link, owner })
+    .then((card) => res.status(CREATED).json(card))
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        next(new BadRequest('Переданы некорректные данные при создании карточки'));
+      } else {
+        next(err);
+      }
+    });
 };
 
-export const deleteCard: RequestHandler = async (req, res, next): Promise<void> => {
-  try {
-    const { cardId } = req.params;
-    const card = await Card.findById(cardId);
-
-    if (!card) {
-      res.status(NOT_FOUND).json({ message: 'Карточка с указанным _id не найдена' });
-      return;
-    }
-
-    if (card.owner.toString() !== req.user?._id) {
-      res.status(FORBIDDEN).json({ message: 'Недостаточно прав для удаления карточки' });
-      return;
-    }
-
-    await Card.findByIdAndDelete(cardId);
-    res.json({ message: 'Карточка удалена' });
-  } catch (err) {
-    if (err instanceof MongooseError.CastError) {
-      res.status(BAD_REQUEST).json({ message: 'Передан некорректный _id карточки' });
-      return;
-    }
-    next(err);
-  }
+export const deleteCard: RequestHandler = (req, res, next) => {
+  const { cardId } = req.params;
+  Card.findById(cardId)
+    .orFail(() => new NotFound('Карточка с указанным _id не найдена'))
+    .then((card) => {
+      if (card.owner.toString() !== req.user!._id) {
+        throw new Forbidden('Недостаточно прав для удаления карточки');
+      }
+      return Card.findByIdAndDelete(cardId);
+    })
+    .then(() => res.json({ message: 'Карточка удалена' }))
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        return next(new BadRequest('Передан некорректный _id карточки'));
+      }
+      return next(err);
+    });
 };
 
-export const likeCard: RequestHandler = async (req, res, next): Promise<void> => {
+export const likeCard: RequestHandler = async (req, res, next) => {
   try {
     const { cardId } = req.params;
-    const ownerId = req.user?._id;
+    const userId = req.user?._id;
 
     const updatedCard = await Card.findByIdAndUpdate(
       cardId,
-      { $addToSet: { likes: ownerId } },
-      { new: true }
-    );
-
-    if (!updatedCard) {
-      res.status(NOT_FOUND).json({ message: 'Передан несуществующий _id карточки' });
-      return;
-    }
+      { $addToSet: { likes: userId } },
+      { new: true, runValidators: true },
+    ).orFail(() => new NotFound('Карточка с указанным _id не найдена'));
 
     res.json(updatedCard);
   } catch (err) {
     if (err instanceof MongooseError.CastError) {
-      res.status(BAD_REQUEST).json({ message: 'Переданы некорректные данные для постановки лайка' });
-      return;
+      next(new BadRequest('Переданы некорректные данные для постановки лайка'));
+    } else {
+      next(err);
     }
-    next(err);
   }
 };
 
-export const dislikeCard: RequestHandler = async (req, res, next): Promise<void> => {
+export const dislikeCard: RequestHandler = async (req, res, next) => {
   try {
     const { cardId } = req.params;
-    const ownerId = req.user?._id;
+    const userId = req.user?._id;
 
     const updatedCard = await Card.findByIdAndUpdate(
       cardId,
-      { $pull: { likes: ownerId } },
-      { new: true }
-    );
-
-    if (!updatedCard) {
-      res.status(NOT_FOUND).json({ message: 'Передан несуществующий _id карточки' });
-      return;
-    }
+      { $pull: { likes: userId } },
+      { new: true, runValidators: true },
+    ).orFail(() => new NotFound('Карточка с указанным _id не найдена'));
 
     res.json(updatedCard);
   } catch (err) {
     if (err instanceof MongooseError.CastError) {
-      res.status(BAD_REQUEST).json({ message: 'Переданы некорректные данные для снятия лайка' });
-      return;
+      next(new BadRequest('Переданы некорректные данные для снятия лайка'));
+    } else {
+      next(err);
     }
-    next(err);
   }
 };
