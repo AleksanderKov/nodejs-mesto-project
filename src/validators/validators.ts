@@ -40,12 +40,25 @@ const passwordRule = Joi.string()
     'string.empty': 'Пароль обязателен для заполнения',
   });
 
-export const validateObjId = celebrate({
+// Валидатор :userId
+export const validateUserId = celebrate({
   params: Joi.object().keys({
-    id: Joi.string().hex().length(24).required()
+    userId: Joi.string().hex().length(24).required()
       .messages({
-        'string.hex': 'Невалидный идентификатор',
-        'string.length': 'Идентификатор должен содержать 24 символа',
+        'string.hex': 'Невалидный ID пользователя',
+        'string.length': 'ID должен содержать 24 символа',
+      }),
+  }),
+});
+
+// Валидатор :cardId
+export const validateCardId = celebrate({
+  params: Joi.object().keys({
+    cardId: Joi.string().hex().length(24).required()
+      .messages({
+        'string.hex': 'Невалидный идентификатор карточки',
+        'string.length': 'Идентификатор карточки должен содержать 24 символа',
+        'any.required': 'Идентификатор карточки обязателен',
       }),
   }),
 });
@@ -104,22 +117,10 @@ export const validateRegistration = celebrate({
   }),
 });
 
-export const validateCardId = celebrate({
-  params: Joi.object().keys({
-    cardId: Joi.string().hex().length(24).required()
-      .messages({
-        'string.hex': 'Невалидный идентификатор карточки',
-        'string.length': 'Идентификатор карточки должен содержать 24 символа',
-        'any.required': 'Идентификатор карточки обязателен',
-      }),
-  }),
-});
-
 export default {
   URL_REGEX,
   NAME_REGEX,
   PASSWORD_REGEX,
-  validateObjId,
   validateCardBody,
   validateUserBody,
   validateAuthentication,

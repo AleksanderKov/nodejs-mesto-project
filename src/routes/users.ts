@@ -9,14 +9,14 @@ import {
 import {
   validateAvatar,
   validateProfile,
-  validateObjId,
+  validateUserId,
 } from '../validators/validators';
 
 const router = Router();
 
 router.get('/', getUsers);
 router.get('/me', getCurrentUser);
-router.get('/:userId', validateObjId, getUserById);
+router.get('/:userId', validateUserId, getUserById);
 router.patch('/me', validateProfile, updateProfile);
 router.patch('/me/avatar', validateAvatar, updateAvatar);
 

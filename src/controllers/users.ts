@@ -95,9 +95,9 @@ export const createUser: RequestHandler = async (req, res, next): Promise<void> 
     const newUser = new User({
       email,
       password: hash,
-      name: name || 'Жак-Ив Кусто',
-      about: about || 'Исследователь',
-      avatar: avatar || 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
+      name,
+      about,
+      avatar,
     });
 
     const savedUser = await newUser.save();
